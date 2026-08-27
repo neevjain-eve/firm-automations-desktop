@@ -1,0 +1,69 @@
+/* Replica of the original TO-DO-LIST app's design system */
+.td-scope {
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --accent: #22c55e;
+  --danger: #ef4444;
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  color: var(--text);
+}
+.td-scope * { box-sizing: border-box; }
+.td-scope input, .td-scope select, .td-scope textarea {
+  font-family: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%;
+}
+.td-scope button { font-family: inherit; cursor: pointer; }
+
+.td-btn { border: 1px solid var(--border); background: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--text); }
+.td-btn:hover { background: #f3f4f6; }
+.td-btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.td-btn-primary:hover { background: var(--primary-dark); }
+.td-btn-outline-danger { color: var(--danger); border-color: var(--danger); background: #fff; }
+.td-btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.td-grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.td-stat { border-radius: 12px; padding: 16px; color: #fff; cursor: pointer; transition: transform .1s; }
+.td-stat:hover { transform: translateY(-2px); filter: brightness(.96); }
+.td-stat .v { font-size: 22px; font-weight: 800; }
+.td-stat .l { font-size: 12px; opacity: .9; margin-top: 2px; }
+.td-stat-blue { background: linear-gradient(135deg, #2563eb, #1e40af); }
+.td-stat-amber { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.td-stat-green { background: linear-gradient(135deg, #22c55e, #15803d); }
+.td-stat-purple { background: linear-gradient(135deg, #7c3aed, #5b21b6); }
+
+.td-panel { border: 1px dashed var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; background: #fff; }
+
+.td-table-card { background: var(--card); border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .06); overflow: hidden; }
+.td-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.td-table th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid var(--border); background: #fafbfc; }
+.td-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.td-table tr.overdue { background: #fef2f2; }
+.td-table tr.clickable { cursor: pointer; }
+.td-table tr.clickable:hover { background: #f3f4f6; }
+
+.td-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #fff; }
+.td-b-low { background: #6b7280; }
+.td-b-medium { background: #0ea5e9; }
+.td-b-high { background: #f59e0b; }
+.td-b-critical { background: #ef4444; }
+.td-s-not_started { background: #6b7280; }
+.td-s-in_progress { background: #2563eb; }
+.td-s-completed { background: #16a34a; }
+
+.td-taskgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.td-taskcard { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: #fff; }
+.td-taskcard h4 { margin: 8px 0 4px; font-size: 14px; }
+.td-taskcard p { margin: 2px 0; font-size: 12px; color: var(--muted); }
+.td-row-between { display: flex; justify-content: space-between; align-items: center; }
+.td-desc-text { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 6px; }
+
+.td-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.td-view-toggle { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.td-view-toggle button { border: none; border-radius: 0; padding: 8px 14px; font-size: 12px; font-weight: 600; background: #fff; color: var(--muted); }
+.td-view-toggle button.active { background: var(--primary); color: #fff; }
+
+.td-calendar-cell { min-height: 90px; border: 1px solid var(--border); padding: 6px; vertical-align: top; }
+.td-calendar-chip { display: block; font-size: 11px; padding: 2px 6px; border-radius: 6px; margin-bottom: 2px; color: #fff; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

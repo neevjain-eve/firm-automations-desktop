@@ -1,0 +1,44 @@
+{
+  "packageId": "com.firmautomations.app",
+  "host": "firm-app-orpin.vercel.app",
+  "name": "Firm Automations",
+  "launcherName": "Firm Automations",
+  "display": "standalone",
+  "themeColor": "#0F172AFF",
+  "themeColorDark": "#0F172AFF",
+  "navigationColor": "#0F172AFF",
+  "navigationColorDark": "#0F172AFF",
+  "navigationDividerColor": "#0F172AFF",
+  "navigationDividerColorDark": "#0F172AFF",
+  "backgroundColor": "#F8FAFCFF",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://firm-app-orpin.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://firm-app-orpin.vercel.app/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://firm-app-orpin.vercel.app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "orientation": "portrait",
+  "splashScreenFadeOutDuration": 300,
+  "fingerprints": [
+    {
+      "name": "Release key from local signing",
+      "value": "38:0E:5A:5B:A1:07:45:AB:29:D2:51:3A:55:B4:27:E5:4A:BA:38:51:14:00:11:0B:BB:27:3A:6C:59:88:4E:EF"
+    }
+  ],
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "firmapp"
+  }
+}

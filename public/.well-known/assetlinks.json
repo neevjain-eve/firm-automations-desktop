@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.firmautomations.app",
+      "sha256_cert_fingerprints": [
+        "38:0E:5A:5B:A1:07:45:AB:29:D2:51:3A:55:B4:27:E5:4A:BA:38:51:14:00:11:0B:BB:27:3A:6C:59:88:4E:EF"
+      ]
+    }
+  }
+]

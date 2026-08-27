@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Desktop build: local SQLite file instead of hosted Postgres. DATABASE_URL
+// is set at runtime by electron/main.js to a file inside the OS's per-user
+// app-data directory (e.g. ~/Library/Application Support/Firm Automations
+// on macOS, %APPDATA%/Firm Automations on Windows) so each install has its
+// own private database -- nothing leaves the machine.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String?  // bcrypt hash -- optional so existing rows aren't broken by this migration
+  role      String   @default("staff") // "staff" | "partner" | "admin"
+  createdAt DateTime @default(now())
+
+  runs               AutomationRun[]
+  statusTasks        StatusTask[]
+  agreements         Agreement[]
+  gstReconciliations GstReconciliation[]
+  leaseAgreements    LeaseAgreement[]
+  toDoTasksCreated   ToDoTask[]         @relation("ToDoTasksCreated")
+  toDoAssignments    ToDoAssignee[]
+  toDoWorkLogs       ToDoWorkLog[]
+  policiesCreated    Policy[]
+  policySignatures   PolicySignature[]
+  comments           Comment[]
+  attachments        Attachment[]
+}
+
+// Generic comment thread attachable to any tracker entity (Status Tracker task,
+// Agreement, GST reconciliation row, Lease, To-Do task). entityType is a short
+// tag like "status_task" | "agreement" | "gst" | "lease" | "todo_task", and
+// entityId is that record's id. Kept generic so every tracker gets comments
+// without a separate table per tracker.
+model Comment {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  body       String
+  createdAt  DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+// Generic file attachment, same polymorphic pattern as Comment. Files are
+// stored in Vercel Blob storage -- this row just tracks metadata + the URL.
+model Attachment {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  fileName   String
+  fileUrl    String
+  fileSize   Int
+  createdAt  DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+}
+
+// One row per automation execution. This is the audit trail --
+// keep it even after the automations themselves evolve.
+model AutomationRun {
+  id           String   @id @default(cuid())
+  automationId String // e.g. "mis-rollforward", "je-prep", "reconciliation"
+  status       String   @default("running") // "running" | "success" | "failed"
+  input        String? // JSON-encoded (SQLite has no native Json column type)
+  output       String? // JSON-encoded (SQLite has no native Json column type)
+  error        String?
+  startedAt    DateTime @default(now())
+  finishedAt   DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([automationId])
+  @@index([userId])
+}
+
+// Status Tracker -- field set matches the original Status-Tracker app
+// (Task Name, Client, Manager, Team Member, Priority, Status, Due Date,
+// Description, Blockers, Action Points). No OneDrive sync or AI assistant --
+// this is backed by the firm's own database instead.
+model StatusTask {
+  id           String    @id @default(cuid())
+  title        String    // Task Name
+  clientName   String?
+  manager      String?
+  teamMember   String?
+  priority     String    @default("medium") // "low" | "medium" | "high"
+  status       String    @default("not_started") // "not_started" | "in_progress" | "blocked" | "on_hold" | "completed"
+  notes        String?   // Task Description
+  blockers     String?
+  actionPoints String?
+  dueDate      DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@index([status])
+}
+
+// EL Tracker -- field set matches the original Agreement-Tracker-PDKA app
+// (Agreement Type, Client Name, City/Area, dates, value). No OneDrive sync
+// or AI assistant -- this is backed by the firm's own database instead.
+model Agreement {
+  id             String    @id @default(cuid())
+  name           String
+  clientName     String
+  agreementType  String?   // e.g. "Advisory Services Agreement"
+  city           String?
+  areaLocality   String?
+  startDate      DateTime
+  endDate        DateTime
+  amount         Float?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Renewal chain: when an agreement is renewed, a new row is created that
+  // points back at the one it replaced. renewedFromId is null for the
+  // original agreement in a chain.
+  renewedFromId String?
+  renewedFrom   Agreement?  @relation("AgreementRenewal", fields: [renewedFromId], references: [id])
+  renewals      Agreement[] @relation("AgreementRenewal")
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@index([endDate])
+}
+
+// GST Reconciliation tracker -- reconcile books vs GST portal figures per
+// filing period. Core basics only: no auto-import from the GST portal yet.
+model GstReconciliation {
+  id             String    @id @default(cuid())
+  period         String    // e.g. "Jul 2026"
+  returnType     String    @default("GSTR-3B") // "GSTR-1" | "GSTR-3B" | "GSTR-2B" | "Annual"
+  status         String    @default("pending") // "pending" | "matched" | "mismatch"
+  gstin          String?
+  dueDate        DateTime?
+  filedBy        String?
+  amountBooks    Float?
+  amountGst      Float?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@index([status])
+}
+
+// Lease Agreement tracker -- same shape as EL Tracker but for property/asset
+// leases: track lessor, rent, and expiry.
+model LeaseAgreement {
+  id            String    @id @default(cuid())
+  propertyName  String
+  lessorName    String
+  contactPerson String?
+  phone         String?
+  email         String?
+  city          String?
+  startDate     DateTime
+  endDate       DateTime
+  rentAmount    Float?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  @@index([endDate])
+}
+
+// To-Do List Tracker -- field set matches the original TO-DO-LIST app
+// (task title, description, due date, priority, department, client,
+// multiple assignees, work log entries). No separate employee/manager
+// records -- assignees are just the firm's real accounts (via signup).
+model ToDoTask {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  priority    String    @default("medium") // "low" | "medium" | "high"
+  status      String    @default("not_started") // "not_started" | "in_progress" | "completed"
+  department  String?
+  client      String?
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdById String
+  createdBy   User   @relation("ToDoTasksCreated", fields: [createdById], references: [id])
+
+  assignees ToDoAssignee[]
+  workLogs  ToDoWorkLog[]
+
+  @@index([status])
+}
+
+model ToDoAssignee {
+  id     String @id @default(cuid())
+  taskId String
+  task   ToDoTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId])
+}
+
+model ToDoWorkLog {
+  id          String   @id @default(cuid())
+  taskId      String
+  task        ToDoTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  description String
+  logDate     DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([taskId])
+}
+
+// e-Signature -- matches the original PDKASIGN app (staff sign off on a
+// company policy: typed name, date, drawn signature). No OneDrive storage or
+// Microsoft sign-in -- policies and signatures live in the firm's own
+// database, signed with the account each person already has.
+model Policy {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   // the policy text staff are acknowledging
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  signatures PolicySignature[]
+}
+
+// Backing store for the literally-copied TO-DO-LIST app (app/api routes
+// under pages/api/legacy-todo/*, unmodified from the original repo except
+// swapping their storage module for this table instead of Vercel KV / local
+// JSON files). Each key is one of the original app's collections
+// ("employees", "users", "managers", "tasks", "personalTasks", "idSeq"),
+// value is that collection's JSON blob -- exactly the shape readJSON/
+// writeJSON expects, so the original business logic needs zero changes.
+model LegacyTodoStore {
+  key   String @id
+  value String // JSON-encoded blob (SQLite has no native Json type -- routes JSON.stringify/parse this)
+}
+
+// Backing store for the literally-copied Status Tracker frontend
+// (public/legacy/status-tracker/index.html, unmodified UI/business logic).
+// The original app synced its `tasks`/`clients` data to OneDrive via
+// Microsoft Graph, using a master token cached in a public GitHub file
+// refreshed by a client-side GitHub write token -- that token leaked
+// publicly, so this port replaces that whole relay with this table instead.
+// Keys: "config" (users list) and "tasks" ({tasks, clients}).
+model LegacyStatusStore {
+  key   String @id
+  value String // JSON-encoded blob (SQLite has no native Json type -- routes JSON.stringify/parse this)
+}
+
+// Backing store for the literally-copied EL Tracker (Agreement Tracker)
+// frontend. Same rationale as LegacyStatusStore: the original app's
+// OneDrive sync relied on a client-side GitHub write token (also leaked
+// publicly) to refresh a shared master token. Keys: "data"
+// ({agreements, bills, clientTasks, lastUpdated, updatedBy}) and "users"
+// (the app's own staff login list, separate from Firm Automations accounts).
+model LegacyElTrackerStore {
+  key   String @id
+  value String // JSON-encoded blob (SQLite has no native Json type -- routes JSON.stringify/parse this)
+}
+
+model PolicySignature {
+  id            String   @id @default(cuid())
+  policyId      String
+  policy        Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  signedName    String
+  signatureData String   // canvas-drawn signature, PNG data URL
+  signedAt      DateTime @default(now())
+
+  @@unique([policyId, userId])
+}

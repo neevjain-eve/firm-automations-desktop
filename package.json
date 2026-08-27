@@ -1,0 +1,87 @@
+{
+  "name": "firm-automations-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Firm Automations, packaged as an offline desktop app (local SQLite, no cloud dependency).",
+  "author": "Neev Jain",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "postbuild": "node scripts/copy-standalone-assets.js",
+    "postinstall": "prisma generate",
+    "start": "next start",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "electron": "electron .",
+    "electron:dev": "ELECTRON_BUILD=true npm run build && electron .",
+    "predist": "ELECTRON_BUILD=true npm run build",
+    "dist:mac": "npm run predist && electron-builder --mac",
+    "dist:win": "npm run predist && electron-builder --win",
+    "dist": "npm run predist && electron-builder --mac --win"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@prisma/client": "^5.20.0",
+    "bcryptjs": "^2.4.3",
+    "next": "14.2.35",
+    "next-auth": "^4.24.8",
+    "next-pwa": "^5.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.16.10",
+    "@types/react": "^18.3.10",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.47",
+    "prisma": "^5.20.0",
+    "tailwindcss": "^3.4.13",
+    "typescript": "^5.6.2"
+  },
+  "build": {
+    "appId": "in.pdka.firmautomations",
+    "productName": "Firm Automations",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release",
+      "buildResources": "build-resources"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "!.next{,/**/*}",
+      "!public{,/**/*}",
+      "!prisma{,/**/*}",
+      "!node_modules{,/**/*}"
+    ],
+    "extraResources": [
+      { "from": ".next/standalone", "to": "app" },
+      { "from": "prisma/schema.prisma", "to": "prisma/schema.prisma" },
+      { "from": "prisma/migrations", "to": "prisma/migrations" }
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ]
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

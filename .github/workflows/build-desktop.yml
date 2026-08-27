@@ -1,0 +1,56 @@
+name: Build Desktop App
+
+# Builds the offline desktop version of Firm Automations for macOS and
+# Windows. Runs on real macOS/Windows GitHub-hosted runners because the
+# .dmg/.exe installers need to be produced on (or cross-compiled for) their
+# target OS -- a Linux dev sandbox can't produce a signed/notarized .dmg,
+# and Windows NSIS installers are far more reliable built on Windows itself.
+#
+# Trigger manually from the Actions tab ("Run workflow"), or push a tag
+# like "desktop-v1.0.0" to build automatically. Either way, the finished
+# installers show up as downloadable build artifacts on the workflow run
+# (Actions tab -> this run -> Artifacts section) -- no code signing is
+# configured, so macOS will show an "unidentified developer" warning and
+# Windows SmartScreen may warn too; that's expected for an unsigned
+# internal tool and doesn't block installation (right-click -> Open on
+# mac, "More info -> Run anyway" on Windows).
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - 'desktop-v*'
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run dist:mac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firm-automations-mac
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firm-automations-windows
+          path: |
+            release/*.exe
+          if-no-files-found: error

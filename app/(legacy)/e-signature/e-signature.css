@@ -1,0 +1,56 @@
+/* Replica of the original PDKASIGN app's design system */
+.es-scope {
+  --brand: #1b5e3f;
+  --brand-dark: #123f2b;
+  --bg: #f4f6f5;
+  --card: #ffffff;
+  --border: #dbe3df;
+  --text: #1f2a24;
+  --muted: #5b6b63;
+  --danger: #b3261e;
+  --ok: #1b7d3e;
+  --warn: #8a6100;
+  color: var(--text);
+  margin: -24px -20px;
+  padding-bottom: 24px;
+}
+.es-scope * { box-sizing: border-box; }
+
+.es-header { background: var(--brand-dark); color: #fff; padding: 20px 24px; margin-bottom: 20px; }
+.es-header h1 { margin: 0; font-size: 1.2rem; }
+.es-header p { margin: 4px 0 0; font-size: .85rem; opacity: .85; }
+
+.es-wrap { max-width: 920px; margin: 0 auto; padding: 0 20px 40px; }
+
+.es-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+.es-card h2 { margin: 0 0 4px; font-size: 1rem; color: var(--brand-dark); }
+.es-card .hint { margin: 0 0 14px; font-size: .85rem; color: var(--muted); }
+
+.es-scope label { font-size: .85rem; color: var(--muted); display: block; margin: 10px 0 4px; }
+.es-scope input[type=text], .es-scope input[type=email], .es-scope textarea, .es-scope select {
+  width: 100%; padding: 9px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; font-family: inherit; background: #fff;
+}
+.es-scope textarea { font-family: Consolas, monospace; font-size: .82rem; }
+.es-scope button { cursor: pointer; border: none; border-radius: 6px; padding: 9px 16px; font-size: .88rem; font-weight: 600; }
+.es-btn-primary { background: var(--brand); color: #fff; }
+.es-btn-primary:disabled { background: #9db3aa; cursor: not-allowed; }
+.es-btn-secondary { background: #eceeed; color: var(--text); }
+
+.es-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.es-status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; padding: 4px 10px; border-radius: 999px; background: #eef3f0; color: var(--brand-dark); }
+.es-status-pill.signed { background: #e3f5e8; color: var(--ok); }
+.es-status-pill.pending { background: #fff6e0; color: var(--warn); }
+
+.es-msg { padding: 10px 12px; border-radius: 8px; font-size: .85rem; margin-top: 10px; }
+.es-msg.error { background: #fdecea; color: var(--danger); border: 1px solid #f5c2be; }
+.es-msg.ok { background: #e6f6ea; color: var(--ok); border: 1px solid #bfe6c9; }
+
+.es-policy-title { font-weight: 700; color: var(--brand-dark); cursor: pointer; }
+.es-policy-meta { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+.es-policy-content { white-space: pre-wrap; font-size: .88rem; color: var(--text); background: #fafafa; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin: 12px 0; }
+.es-sign-list { list-style: none; margin: 0; padding: 0; font-size: .8rem; color: var(--text); }
+.es-sign-list li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.es-sign-list li:last-child { border-bottom: none; }
+
+.es-sig-pad-wrap { border: 1.5px dashed #9aa8a1; border-radius: 8px; padding: 8px; background: #fafcfb; }

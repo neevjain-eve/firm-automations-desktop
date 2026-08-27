@@ -1,0 +1,19 @@
+node_modules/
+.next/
+.vercel/
+*.env
+.env
+.env.local
+.env.prod
+.env*.local
+public/legacy/**/node_modules
+npm-debug.log*
+.DS_Store
+
+# Electron desktop build output -- installers are produced by CI
+# (.github/workflows/build-desktop.yml) and downloaded as artifacts,
+# never committed.
+release/
+local-data/
+*.db
+*.db-journal
