@@ -15,8 +15,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "electron": "electron .",
-    "electron:dev": "ELECTRON_BUILD=true npm run build && electron .",
-    "predist": "ELECTRON_BUILD=true npm run build",
+    "electron:dev": "cross-env ELECTRON_BUILD=true npm run build && electron .",
+    "predist": "cross-env ELECTRON_BUILD=true npm run build",
     "dist:mac": "npm run predist && electron-builder --mac --publish=never",
     "dist:win": "npm run predist && electron-builder --win --publish=never",
     "dist": "npm run predist && electron-builder --mac --win --publish=never"
@@ -38,6 +38,7 @@
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
     "electron": "^31.7.7",
     "electron-builder": "^24.13.3",
     "postcss": "^8.4.47",
