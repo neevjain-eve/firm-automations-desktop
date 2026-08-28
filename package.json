@@ -17,9 +17,9 @@
     "electron": "electron .",
     "electron:dev": "ELECTRON_BUILD=true npm run build && electron .",
     "predist": "ELECTRON_BUILD=true npm run build",
-    "dist:mac": "npm run predist && electron-builder --mac",
-    "dist:win": "npm run predist && electron-builder --win",
-    "dist": "npm run predist && electron-builder --mac --win"
+    "dist:mac": "npm run predist && electron-builder --mac --publish=never",
+    "dist:win": "npm run predist && electron-builder --win --publish=never",
+    "dist": "npm run predist && electron-builder --mac --win --publish=never"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -49,6 +49,7 @@
     "appId": "in.pdka.firmautomations",
     "productName": "Firm Automations",
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "publish": null,
     "directories": {
       "output": "release",
       "buildResources": "build-resources"
