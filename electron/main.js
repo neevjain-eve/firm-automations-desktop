@@ -6,19 +6,29 @@
 //      data, and nothing is shared between machines).
 //   2. If that file is brand new (first run), apply the bundled Prisma
 //      migration SQL to create all the tables.
-//   3. Spawn the Next.js "standalone" production server (built by
-//      `next build` with output: 'standalone') as a child process on a
-//      local port.
+//   3. Load the Next.js "standalone" production server (built by
+//      `next build` with output: 'standalone') directly in this same
+//      process on a local port.
 //   4. Open a normal BrowserWindow pointed at that local server.
 //
 // Nothing here talks to the internet. The whole app -- UI, API routes,
-// database -- runs inside this one process tree on the user's machine.
-
+// database -- runs inside this one process on the user's machine.
+//
+// IMPORTANT: the server used to run as a spawned child process, launched
+// via `spawn(process.execPath, [serverPath], { env: { ELECTRON_RUN_AS_NODE:
+// '1' } })`. That pattern -- an app re-executing its own binary as a
+// generic script runtime -- is a known technique real malware uses to
+// hide a payload inside a legitimate-looking Electron binary, and it got
+// this exact app flagged and deleted by macOS's on-device malware scanner
+// (XProtect) on a real test install, even after stripping the quarantine
+// attribute (i.e. a genuine signature/heuristic match, not just the usual
+// "unidentified developer" Gatekeeper prompt). Loading the server directly
+// in-process via require() instead avoids that pattern entirely -- no
+// subprocess, no ELECTRON_RUN_AS_NODE, nothing that looks like a loader.
 const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { spawn } = require('child_process');
 const http = require('http');
 
 const PORT = 4317;
@@ -45,7 +55,6 @@ const dbPath = path.join(userDataDir, 'local.db');
 const attachmentsDir = path.join(userDataDir, 'attachments');
 const secretPath = path.join(userDataDir, '.nextauth-secret');
 
-let serverProcess = null;
 let mainWindow = null;
 
 function getOrCreateAuthSecret() {
@@ -128,27 +137,24 @@ function waitForServer(url, timeoutMs = 20000) {
 function startNextServer() {
   const serverPath = path.join(standaloneBase, 'server.js');
 
-  serverProcess = spawn(process.execPath, [serverPath], {
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-      PORT: String(PORT),
-      HOSTNAME: '127.0.0.1',
-      DATABASE_URL: `file:${dbPath}`,
-      ATTACHMENTS_DIR: attachmentsDir,
-      NEXTAUTH_URL: `http://127.0.0.1:${PORT}`,
-      NEXTAUTH_SECRET: getOrCreateAuthSecret(),
-      ELECTRON_RUN_AS_NODE: '1'
-    },
-    cwd: standaloneBase,
-    stdio: 'inherit'
-  });
+  // Set the env vars the standalone server reads on startup, then load it
+  // directly into this process -- same effect as `node server.js`, minus
+  // the subprocess. Electron's main process is already a full Node.js
+  // environment, so there's nothing this needs that a child process would
+  // have given it.
+  process.env.NODE_ENV = 'production';
+  process.env.PORT = String(PORT);
+  process.env.HOSTNAME = '127.0.0.1';
+  process.env.DATABASE_URL = `file:${dbPath}`;
+  process.env.ATTACHMENTS_DIR = attachmentsDir;
+  process.env.NEXTAUTH_URL = `http://127.0.0.1:${PORT}`;
+  process.env.NEXTAUTH_SECRET = getOrCreateAuthSecret();
 
-  serverProcess.on('exit', (code) => {
-    if (code !== 0 && mainWindow) {
-      console.error(`Local server exited unexpectedly with code ${code}`);
-    }
-  });
+  // The standalone server.js resolves its own asset paths relative to
+  // its own directory, but some generated builds also lean on cwd -- match
+  // what `node server.js` would have had.
+  process.chdir(standaloneBase);
+  require(serverPath);
 }
 
 function createWindow() {
@@ -202,9 +208,5 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-app.on('before-quit', () => {
-  if (serverProcess) {
-    serverProcess.kill();
-    serverProcess = null;
-  }
-});
+// No subprocess to clean up anymore -- the server runs in this process and
+// exits when Electron does.
