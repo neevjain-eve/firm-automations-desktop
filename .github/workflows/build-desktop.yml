@@ -16,7 +16,16 @@ name: Build Desktop App
 # mac, "More info -> Run anyway" on Windows).
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      mac_target:
+        description: 'Mac build scope'
+        type: choice
+        default: full
+        options:
+          - full
+          - arm64-dmg-only
+          - x64-dmg-only
   push:
     tags:
       - 'desktop-v*'
@@ -30,7 +39,17 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npm run dist:mac
+      - run: npm run predist
+      # Full build (both archs, dmg+zip) unless a single-variant scope was
+      # picked from the manual "Run workflow" form -- useful when someone
+      # just wants a quick download matching their own machine instead of
+      # waiting on/downloading all 4 variants (~430MB vs ~100MB).
+      - if: ${{ github.event.inputs.mac_target == 'arm64-dmg-only' }}
+        run: npx electron-builder --mac dmg --arm64 --publish=never
+      - if: ${{ github.event.inputs.mac_target == 'x64-dmg-only' }}
+        run: npx electron-builder --mac dmg --x64 --publish=never
+      - if: ${{ github.event.inputs.mac_target == 'full' || github.event.inputs.mac_target == '' }}
+        run: npx electron-builder --mac --publish=never
       - uses: actions/upload-artifact@v4
         with:
           name: firm-automations-mac
