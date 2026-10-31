@@ -17,6 +17,7 @@ var scrollToRowId = null;
 function api(path, opts) {
   opts = opts || {};
   var headers = { 'Content-Type': 'application/json' };
+  if (opts.headers) Object.keys(opts.headers).forEach(function (k) { headers[k] = opts.headers[k]; });
   if (session && session.token) headers.Authorization = 'Bearer ' + session.token;
   return fetch('/api' + path, {
     method: opts.method || 'GET',
@@ -37,9 +38,21 @@ function api(path, opts) {
 function showLoginErr(msg) { var el = document.getElementById('loginErr'); el.textContent = msg; el.classList.remove('hidden'); document.getElementById('loginOk').classList.add('hidden'); }
 function showLoginOk(msg) { var el = document.getElementById('loginOk'); el.textContent = msg; el.classList.remove('hidden'); document.getElementById('loginErr').classList.add('hidden'); }
 
+// First-time setup. This endpoint is locked: it needs the deployment's
+// ADMIN_SETUP_SECRET and two passwords chosen right now (no built-in defaults).
 document.getElementById('seedBtn').addEventListener('click', function () {
-  api('/seed', { method: 'POST', body: {} }).then(function (data) {
-    showLoginOk('Ready. Admin login: admin / Admin@123. Employee login: any username (e.g. anusha) / Welcome@123.');
+  var secret = window.prompt('Setup secret (ADMIN_SETUP_SECRET):');
+  if (!secret) return;
+  var adminPassword = window.prompt('Choose the admin password (at least 12 characters):');
+  if (!adminPassword) return;
+  var employeePassword = window.prompt('Choose the starting password for employee accounts (at least 12 characters):');
+  if (!employeePassword) return;
+  api('/seed', {
+    method: 'POST',
+    headers: { 'x-setup-secret': secret },
+    body: { adminPassword: adminPassword, employeePassword: employeePassword }
+  }).then(function () {
+    showLoginOk('Ready. Sign in as "admin" with the admin password you just chose. Employees sign in with their username and the starting password you chose.');
   }).catch(function (e) { showLoginErr(e.message); });
 });
 
