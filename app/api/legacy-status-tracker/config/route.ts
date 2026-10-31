@@ -9,15 +9,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { randomBytes } from 'crypto';
 
-const DEFAULT_USERS = [
-  { id: 'USR-1', email: 'bindu@pdka.in', password: 'changeme', role: 'manager', manager: 'Bindu', name: 'Bindu' },
-  { id: 'USR-2', email: 'srikrishna@pdka.in', password: 'changeme', role: 'manager', manager: 'Srikrishna', name: 'Srikrishna' },
-  { id: 'USR-3', email: 'naveen@pdka.in', password: 'changeme', role: 'admin', manager: null, name: 'Naveen' },
-  { id: 'USR-4', email: 'rajesh@pdka.in', password: 'changeme', role: 'manager', manager: 'Rajesh', name: 'Rajesh' },
-  { id: 'USR-5', email: 'manju@pdka.in', password: 'changeme', role: 'manager', manager: 'Manju', name: 'Manju' },
-  { id: 'USR-6', email: 'ramya@pdka.in', password: 'changeme', role: 'manager', manager: 'Ramya', name: 'Ramya' }
-];
+// Initial users for a brand-new install. Each gets its own random password
+// (no shared "changeme"); an admin reads them from the stored config and
+// hands them out, and staff should change them after first login.
+function buildDefaultUsers() {
+  const pw = () => randomBytes(9).toString('base64url');
+  return [
+    { id: 'USR-1', email: 'bindu@pdka.in', password: pw(), role: 'manager', manager: 'Bindu', name: 'Bindu' },
+    { id: 'USR-2', email: 'srikrishna@pdka.in', password: pw(), role: 'manager', manager: 'Srikrishna', name: 'Srikrishna' },
+    { id: 'USR-3', email: 'naveen@pdka.in', password: pw(), role: 'admin', manager: null, name: 'Naveen' },
+    { id: 'USR-4', email: 'rajesh@pdka.in', password: pw(), role: 'manager', manager: 'Rajesh', name: 'Rajesh' },
+    { id: 'USR-5', email: 'manju@pdka.in', password: pw(), role: 'manager', manager: 'Manju', name: 'Manju' },
+    { id: 'USR-6', email: 'ramya@pdka.in', password: pw(), role: 'manager', manager: 'Ramya', name: 'Ramya' }
+  ];
+}
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -28,10 +35,11 @@ export async function GET() {
 
   // First load: seed with fresh placeholder passwords (never the leaked
   // ones) so the app is usable immediately; tell staff to change them.
+  const users = buildDefaultUsers();
   await prisma.legacyStatusStore.create({
-    data: { key: 'config', value: JSON.stringify({ users: DEFAULT_USERS }) }
+    data: { key: 'config', value: JSON.stringify({ users }) }
   });
-  return NextResponse.json({ users: DEFAULT_USERS });
+  return NextResponse.json({ users });
 }
 
 export async function PUT(req: NextRequest) {
